@@ -13,4 +13,10 @@
     <ProjectReference Include="..\SuperChip.Interpreter.V3\SuperChip.Interpreter.V3.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Content\beep.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

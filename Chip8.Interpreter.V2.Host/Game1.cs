@@ -50,6 +50,8 @@ namespace Chip8.Interpreter.V2
             //var ibmBits = File.ReadAllBytes("progs/chip8-roms/demos/Stars [Sergey Naydenov, 2010].ch8");
             var file = File.ReadAllBytes("Content/Beep.wav");
             this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Interpreter.V2.Host\progs\chip8-roms\games\Space Invaders [David Winter].ch8");
+            this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Interpreter.V2.Host\progs\chip8-roms\games\Space Invaders [David Winter].ch8");
+            // E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\programs\IBM Logo.ch8
             se = new SoundEffect(file, 16000, AudioChannels.Stereo);
             this.playingSound = se.CreateInstance();
 

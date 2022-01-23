@@ -42,7 +42,7 @@ namespace SuperChip11Interpreter.V3
             return (byte)(@this & 0x0FF0);
         }
 
-        public static byte GetBottom8BitNumber(this ushort @this)
+        public static byte Get8BitConstant(this ushort @this)
         {
             // All three nibbles accounted for
             return (byte)(@this & 0x00FF);

@@ -14,6 +14,7 @@ public partial class Chip8Interpreter
     private readonly int instructionsPerSecond;
     int IndexRegister = 0;
     byte[] Memory = new byte[4096]; // This is 12 bits.
+    byte[] RPL = new byte[7];
     Dictionary<byte, byte> Registers = new Dictionary<byte, byte>(16);
     Stack<ushort> Stack = new Stack<ushort>();
     public bool[] Display = new bool[128 * 64];
@@ -158,10 +159,40 @@ public partial class Chip8Interpreter
                             this.ProgramCounter = returnAddress;
                             break;
                         case 0xFB: // Scroll display 4 pixels right
-                            // blank right 4 'columns'
-
+                            {
+                                // blank right 4 'columns'
+                                var blankSize = 4; ;
+                                var blankMask = Enumerable.Range(0, blankSize).Select(a => false).ToArray();
+                                // var startNumber = this.ExtendedScreenMode ? 128 - blankSize : 64 - blankSize;
+                                // Step through each row
+                                //blanking out the end.
+                                for (var y = 0; y < 64; ++y)
+                                {
+                                    var startIdx = (y * 128);
+                                    var endIdx = startIdx + (128 - blankSize);
+                                    // should always be 128
+                                    var rowData = blankMask.Concat(Display[startIdx..endIdx]).ToArray();
+                                    rowData.CopyTo(Display, startIdx);
+                                }
+                            }
                             break;
-                        case 0xFC: // Scroll display 4 pixels left
+                        case 0xFC:
+                            { // Scroll display 4 pixels left
+                              // blank right 4 'columns'
+                                var blankSize = 4;// this.ExtendedScreenMode ? 4 : 8;
+                                var blankMask = Enumerable.Range(0, blankSize).Select(a => false).ToArray();
+                                // var startNumber = this.ExtendedScreenMode ? 128 - blankSize : 64 - blankSize;
+                                // Step through each row
+                                //blanking out the end.
+                                for (var y = 0; y < 64; ++y)
+                                {
+                                    var startIdx = (y * 128) + blankSize;
+                                    var endIdx = (y * 128) + 128;
+                                    // should always be 128
+                                    var rowData = Display[startIdx..endIdx].Concat(blankMask).ToArray();
+                                    rowData.CopyTo(Display, (y * 128));
+                                }
+                            }
                             break;
                         case 0xFD: // Exit interpreter
                             return;
@@ -191,7 +222,7 @@ public partial class Chip8Interpreter
             case 0x3: // A == B (Register value)
                 {
                     var registerPos = opCode.GetXRegister();
-                    var comparision = opCode.GetBottom8BitNumber();
+                    var comparision = opCode.Get8BitConstant();
                     if (this.Registers[registerPos] == comparision)
                         this.ProgramCounter += 2;
                 }
@@ -199,7 +230,7 @@ public partial class Chip8Interpreter
             case 0x4: // A != B (Register value)
                 {
                     var registerPos = opCode.GetXRegister();
-                    var comparision = opCode.GetBottom8BitNumber();
+                    var comparision = opCode.Get8BitConstant();
                     if (this.Registers[registerPos] != comparision)
                         this.ProgramCounter += 2;
                 }
@@ -208,7 +239,7 @@ public partial class Chip8Interpreter
                 {
                     var registerPosX = opCode.GetXRegister();
                     var registerPosY = opCode.GetYRegister();
-                    var comparision = opCode.GetBottom8BitNumber();
+                    var comparision = opCode.Get8BitConstant();
                     if (this.Registers[registerPosX] == this.Registers[registerPosY])
                         this.ProgramCounter += 2;
                 }
@@ -216,17 +247,36 @@ public partial class Chip8Interpreter
             case 0x6: // SET register
                 {
                     var registerPosX = opCode.GetXRegister();
-                    var number = opCode.GetBottom8BitNumber();
+                    var number = opCode.Get8BitConstant();
                     this.Registers[registerPosX] = number;
                 }
                 break;
             case 0x7: // ADD (No  carry check handled)
                 {
                     var registerPosX = opCode.GetXRegister();
-                    var number = opCode.GetBottom8BitNumber();
+                    var number = opCode.Get8BitConstant();
                     this.Registers[registerPosX] += number;
                 }
                 break;
+            case 0x75:
+                {
+                    var registerPosX = opCode.GetXRegister();
+                    for (byte x = 0; x <= registerPosX; ++x)
+                    {
+                        RPL[x] = this.Registers[x];
+                    }
+                }
+                break;
+            case 0x85:
+                {
+                    var registerPosX = opCode.GetXRegister();
+                    for (byte x = 0; x <= registerPosX; ++x)
+                    {
+                        this.Registers[x] = RPL[x];
+                    }
+                }
+                break;
+
             case 0x8:
                 { // Logical Operators
                     var registerPosX = opCode.GetXRegister();
@@ -335,7 +385,7 @@ public partial class Chip8Interpreter
                 {
                     var num = randomGenerator.Next(0, this.Memory.Length);
                     var registerPosX = opCode.GetXRegister();
-                    var result = num & opCode.GetBottom8BitNumber();
+                    var result = num & opCode.Get8BitConstant();
                     this.Registers[registerPosX] = (byte)result;
                 }
                 break;
@@ -352,7 +402,7 @@ public partial class Chip8Interpreter
                 break;
             case 0xE: // Skip if key
                 {
-                    var cmd = opCode.GetBottom8BitNumber();
+                    var cmd = opCode.Get8BitConstant();
                     var registerPosX = opCode.GetXRegister();
                     var keyPressed = this.Registers[registerPosX];
                     if (cmd == 0x9E)
@@ -369,7 +419,7 @@ public partial class Chip8Interpreter
                 break;
             case 0xF:
                 {
-                    var cmd = opCode.GetBottom8BitNumber();
+                    var cmd = opCode.Get8BitConstant();
                     var registerPosX = opCode.GetXRegister();
                     switch (cmd)
                     {
@@ -406,6 +456,12 @@ public partial class Chip8Interpreter
                             {
                                 // To be pedantic, we only should use final nibble of the register value
                                 this.IndexRegister = this.Registers[registerPosX] * 5;
+                            }
+                            break;
+                        case 0x30: // Super 8 Character
+                            {
+                                // To be pedantic, we only should use final nibble of the register value
+                                this.IndexRegister = this.Registers[registerPosX] * 10;
                             }
                             break;
                         case 0x33: // BCD
