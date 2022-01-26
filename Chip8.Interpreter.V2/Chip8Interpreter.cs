@@ -9,18 +9,20 @@ public partial class Chip8Interpreter
     public event EventHandler SoundOn;
     public event EventHandler SoundOff;
 
+    public int IndexRegister = 0;
+    public byte[] Memory = new byte[4096]; // This is 12 bits.
+    public Dictionary<byte, byte> Registers = new Dictionary<byte, byte>(16);
+    public Stack<ushort> Stack = new Stack<ushort>();
+    public bool[] Display = new bool[64 * 32];
+
     private Random randomGenerator = new Random();
     private Dictionary<char, byte> keyMappings;
     private readonly int instructionsPerSecond;
-    int IndexRegister = 0;
-    byte[] Memory = new byte[4096]; // This is 12 bits.
-    Dictionary<byte, byte> Registers = new Dictionary<byte, byte>(16);
-    Stack<ushort> Stack = new Stack<ushort>();
-    public bool[] Display = new bool[64 * 32];
-    ushort ProgramCounter = 0;
+    
+    public ushort ProgramCounter = 0;
 
-    byte DelayTimer = 0;
-    byte SoundTimer = 0;
+    public byte DelayTimer = 0;
+    public byte SoundTimer = 0;
     private Chip8Timer instructionTimer;
     private Chip8Timer sixtyHertzTimer;
 
@@ -225,7 +227,7 @@ public partial class Chip8Interpreter
                             }
                             break;
 
-                        case 5:
+                        case 5: // Subtract
                             {
                                 var total = (vx - vy);
                                 if (vx > vy) this.Registers[0xF] = 1;
@@ -233,26 +235,26 @@ public partial class Chip8Interpreter
                                 this.Registers[registerPosX] = (byte)total;
                             }
                             break;
-                        case 6: // Left Shift
+                        case 6: // Right Shift
                             {
-                                var tempVx = this.Registers[registerPosX];
+                                var tempVx = this.Registers[registerPosY];
                                 var firstBit = tempVx & 0x01;
                                 this.Registers[registerPosX] = (byte)(tempVx >> 1);
                                 this.Registers[0xF] = (byte)firstBit;
                             }
                             break;
-                        case 7:
+                        case 7: // Vx = Vy-Vx (Carry on borrow)
                             {
                                 var total = (vy - vx);
-                                if (vx > vy) this.Registers[0xF] = 1;
-                                else if (vy > vx) this.Registers[0xF] = 0;
+                                this.Registers[0xF] = 1;
+                                if (vx > vy) this.Registers[0xF] = 0;
                                 this.Registers[registerPosX] = (byte)total;
                             }
                             break;
-                        case 0xE: // Right shift
+                        case 0xE: // Left shift
                             {
-                                var tempVx = this.Registers[registerPosX];
-                                var lastBit = (tempVx & (1 << 0x11)) != 0 ? 1 : 0;  // Does the bit at position 12  =0
+                                var tempVx = this.Registers[registerPosY];
+                                var lastBit = (tempVx & (1 << 0x1)) != 0 ? 1 : 0;  // Does the bit at position 12  =0
                                 this.Registers[registerPosX] = (byte)(tempVx << 1);
                                 this.Registers[0xF] = (byte)lastBit;
 
@@ -295,7 +297,7 @@ public partial class Chip8Interpreter
                 break;
             case 0xC: // Random
                 {
-                    var num = randomGenerator.Next(0, this.Memory.Length);
+                    var num = randomGenerator.Next(0, 256);
                     var registerPosX = opCode.GetXRegister();
                     var result = num & opCode.GetBottom8BitNumber();
                     this.Registers[registerPosX] = (byte)result;
