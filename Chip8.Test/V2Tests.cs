@@ -851,11 +851,90 @@ namespace Chip8.Tests.V2
             chip8.Load(program);
             chip8.Tick();
             chip8.Tick();
-            Assert.True(chip8.IndexRegister == 09*5);
+            Assert.True(chip8.IndexRegister == 09 * 5);
 
         }
 
+        [Fact(DisplayName = "FX33: Store the binary-coded decimal equivalent of the value stored in register VX at addresses I, I+1, and I+2")]
+        public void Set_bcd()
+        {
 
+            byte[] program = new byte[]
+           {
+                    0x61, 0x99,
+                    0x62, 0x21,
+                    0xA2,0x12,
+                    0xF1,0x33,   // V[1] =15
+                    0xF2,0x33, // Set the indexto the value of 5
+
+           };
+            Chip8Interpreter chip8 = new(0, false, false, false);
+            chip8.Load(program);
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            Assert.True(chip8.Memory[0x212] == 1);
+            Assert.True(chip8.Memory[0x213] == 5);
+            Assert.True(chip8.Memory[0x214] == 3);
+
+            chip8.Tick();
+
+            Assert.True(chip8.Memory[0x212] == 0);
+            Assert.True(chip8.Memory[0x213] == 3);
+            Assert.True(chip8.Memory[0x214] == 3);
+
+        }
+
+        [Fact(DisplayName = "FX55: Store the values of registers V0 to VX inclusive in memory starting at address I. I is set to I + X + 1 after operation")]
+        public void store_registers_memory()
+        {
+            byte[] program = new byte[]
+                    {
+                    0x61, 0x99,
+                    0x62, 0x21,
+                    0x63, 0x0A,
+                    0x64, 0x2A,
+
+                    0x6A, 0x01,
+                    0x6B, 0x02,
+                    0x6C, 0x0C,
+                    0x6D, 0x0D,
+                    0xA2, 0x22,
+                    0xF4, 0x55,
+                    0xA3, 0x55,
+                    0xFD, 0x55
+
+                };
+            Chip8Interpreter chip8 = new(0, true, false, false);
+            chip8.Load(program);
+
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+
+            Assert.True(chip8.IndexRegister == 0x222 + 4);
+
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            Assert.True(chip8.IndexRegister == 0x355 + 0xD);
+
+            Assert.True(chip8.Memory[0x222] == 0);
+            Assert.True(chip8.Memory[0x222 + 1] == 0x99);
+            Assert.True(chip8.Memory[0x222 + 2] == 0x21);
+            Assert.True(chip8.Memory[0x222 + 3] == 0x0A);
+            Assert.True(chip8.Memory[0x222 + 4] == 0x2A);
+            Assert.True(chip8.Memory[0x222 + 5] == 0);
+
+        }
 
     }
 
