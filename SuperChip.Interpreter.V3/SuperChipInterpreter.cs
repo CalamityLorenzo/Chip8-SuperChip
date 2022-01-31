@@ -2,42 +2,45 @@
 
 namespace SuperChip11Interpreter.V3;
 
-public partial class Chip8Interpreter
+
+public partial class SuperChipInterpreter
 {
 
     public event EventHandler<Chip8DrawingEventArgs> Drawing;
     public event EventHandler SoundOn;
     public event EventHandler SoundOff;
 
+    public int IndexRegister = 0;
+    public byte[] Memory = new byte[4096]; // This is 12 bits.
+    public Dictionary<byte, byte> Registers = new Dictionary<byte, byte>(16);
+    public Dictionary<byte, byte> RPLFlags = new Dictionary<byte, byte>(16);
+
+    public Stack<ushort> Stack = new Stack<ushort>();
+    public bool[] Display = new bool[128 * 64];
+
     private Random randomGenerator = new Random();
     private Dictionary<char, byte> keyMappings;
-    private readonly int instructionsPerSecond;
-    int IndexRegister = 0;
-    byte[] Memory = new byte[4096]; // This is 12 bits.
-    byte[] RPL = new byte[7];
-    Dictionary<byte, byte> Registers = new Dictionary<byte, byte>(16);
-    Stack<ushort> Stack = new Stack<ushort>();
-    public bool[] Display = new bool[128 * 64];
-    ushort ProgramCounter = 0;
 
-    byte DelayTimer = 0;
-    byte SoundTimer = 0;
+    public ushort ProgramCounter = 0;
+
+    public byte DelayTimer = 0;
+    public byte SoundTimer = 0;
     private Chip8Timer instructionTimer;
     private Chip8Timer sixtyHertzTimer;
 
     public byte? CurrentKey { get; private set; }
 
     public ChipMachineOptions options { get; private set; }
-    public bool ExtendedScreenMode { get; private set; }
+    public bool SuperChipEnabled { get; }
+    public bool HighResolutionMode { get; private set; }
 
-    public Chip8Interpreter(int instructionsPerSecond, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk)
+    public SuperChipInterpreter(int instructionsPerSecond, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk)
     {
         var startTime = DateTime.Now;
         int millisecondsToNextInstruction = (int)Math.Abs(1000f / instructionsPerSecond);
         int sixtyCycleHum = (int)Math.Abs(1000f / 60);
         this.instructionTimer = new Chip8Timer(startTime, millisecondsToNextInstruction);
         this.sixtyHertzTimer = new Chip8Timer(startTime, sixtyCycleHum);
-        this.instructionsPerSecond = instructionsPerSecond;
 
         this.options = new ChipMachineOptions
         {
@@ -50,10 +53,12 @@ public partial class Chip8Interpreter
 
     }
 
-    public Chip8Interpreter(int instructionsPerSecond, bool enableSuperChip) : this(instructionsPerSecond, false, false, false)
+
+    public SuperChipInterpreter(int instructionsPerSecond, bool enableSuperChip) : this(instructionsPerSecond, false, false, false)
     {
         this.SuperChipEnabled = enableSuperChip;
     }
+
 
     /// <summary>
     /// This should run 1 instruction at a time
@@ -91,13 +96,13 @@ public partial class Chip8Interpreter
                 soundTickAccumulator = 0;
                 soundtickduration = new TimeSpan(DateTime.Now.Ticks) - soundtickduration;
                 Debug.WriteLine($"Sound 60 tick duration: ${soundtickduration}");
+
             }
         }
     }
     private TimeSpan soundtickduration;
     private TimeSpan SoundOnLength;
     private int soundTickAccumulator = 0;
-    private bool SuperChipEnabled;
 
     public void Load(byte[] instructions)
     {
@@ -113,12 +118,9 @@ public partial class Chip8Interpreter
     /// <exception cref="OutOfMemoryException"></exception>
     public void Interpreter()
     {
-
         while (ProgramCounter < Memory.Length)
         {
             this.FetchDecodeExecute();
-            if (this.SuperChipEnabled && ProgramCounter == 0xFFF)
-                throw new OutOfMemoryException("Over the lonie");
         }
     }
 
@@ -137,74 +139,94 @@ public partial class Chip8Interpreter
         switch (operation)
         {
             case 0x0:
-                // The scrolling commmand is a pickle becuase we care about the final nibble.
-                if ((opCode & 0xC0) == 192)
+                switch (opCode)
                 {
-                    // Scroll N lines Down
-                    var rows = opCode.GetLastNibble();
-                    // Starting from the bottom,
-                    // a certain set of rows are to be cleared first.
 
-                    // Now copy rows to the new position (again go from the bottom up)
-
-                }
-                else
-                    switch (opCode)
-                    {
-                        case 0xE0: /// ClS
+                    case 0xFD: // Exit interpreter     
+                        {
+                            if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                            return;
+                        }
+                        break;
+                    case 0xFE: // Disable high-resolution mode
+                        {
+                            if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                            this.HighResolutionMode = false;
+                        }
+                        break;
+                    case 0xFF: // Enable high-resolution mode
+                        {
+                            if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                            this.HighResolutionMode = true;
+                        }
+                        break;
+                    case 0xE0:
+                        {
                             this.ClearDisplay();
-                            break;
-                        case 0xEE: // Return from subroutine
+                        }
+                        break;
+                    case 0xEE:
+                        {
                             var returnAddress = this.Stack.Pop();
                             this.ProgramCounter = returnAddress;
-                            break;
-                        case 0xFB: // Scroll display 4 pixels right
-                            {
-                                // blank right 4 'columns'
-                                var blankSize = 4; ;
-                                var blankMask = Enumerable.Range(0, blankSize).Select(a => false).ToArray();
-                                // var startNumber = this.ExtendedScreenMode ? 128 - blankSize : 64 - blankSize;
-                                // Step through each row
-                                //blanking out the end.
-                                for (var y = 0; y < 64; ++y)
-                                {
-                                    var startIdx = (y * 128);
-                                    var endIdx = startIdx + (128 - blankSize);
-                                    // should always be 128
-                                    var rowData = blankMask.Concat(Display[startIdx..endIdx]).ToArray();
-                                    rowData.CopyTo(Display, startIdx);
-                                }
-                            }
-                            break;
-                        case 0xFC:
-                            { // Scroll display 4 pixels left
-                              // blank right 4 'columns'
-                                var blankSize = 4;// this.ExtendedScreenMode ? 4 : 8;
-                                var blankMask = Enumerable.Range(0, blankSize).Select(a => false).ToArray();
-                                // var startNumber = this.ExtendedScreenMode ? 128 - blankSize : 64 - blankSize;
-                                // Step through each row
-                                //blanking out the end.
-                                for (var y = 0; y < 64; ++y)
-                                {
-                                    var startIdx = (y * 128) + blankSize;
-                                    var endIdx = (y * 128) + 128;
-                                    // should always be 128
-                                    var rowData = Display[startIdx..endIdx].Concat(blankMask).ToArray();
-                                    rowData.CopyTo(Display, (y * 128));
-                                }
-                            }
-                            break;
-                        case 0xFD: // Exit interpreter
-                            return;
-                            break;
-                        case 0xFE: // Disable extended screen
-                            this.ExtendedScreenMode = false;
-                            break;
-                        case 0xFF: // Enabled extended sceen mode;
-                            this.ExtendedScreenMode = true;
-                            break;
+                        }
+                        break;
+                    case 0xFB:  // SCroll Right by 4/2
+                        {
+                            if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled.");
+                            int amountToShift = this.HighResolutionMode ? 4 : 2;
 
-                    }
+                            bool[] newDisplay = new bool[128 * 64];
+
+                            for (var y = 0; y < 64; ++y)
+                            {
+                                var rowStartIndex = 128 * y;
+                                Array.Copy(this.Display, rowStartIndex, newDisplay, rowStartIndex + amountToShift, 64 - amountToShift);
+                            }
+
+                            this.Display = newDisplay;
+                        }
+                        break;
+                    case 0xFC:  // SCroll Left by 4/2
+                        {
+                            if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled.");
+                            int amountToShift = this.HighResolutionMode ? 4 : 2;
+
+                            bool[] newDisplay = new bool[128 * 64];
+
+                            for (var y = 0; y < 64; ++y)
+                            {
+                                var rowStartIndex = 128 * y;
+                                Array.Copy(this.Display, rowStartIndex + amountToShift, newDisplay, rowStartIndex, 64 - amountToShift);
+                            }
+
+                            this.Display = newDisplay;
+                        }
+                        break;
+                    default:
+                        if ((opCode & 0xC0) == 192) // Scroll N lines Down
+                        {
+
+                            var rowsToShift = this.HighResolutionMode ? opCode.GetLastNibble() : opCode.GetLastNibble() / 2;
+                            // Starting from the bottom,
+                            // a distanceToMove set of rows are to be cleared first.
+                            var newDisplayArray = new bool[128 * 64];
+
+                            // rowstoshift pulls double duty here.
+                            // it also is the starting row index for the destination
+                            for (var x = 0; x < 64 - rowsToShift; x++)
+                            {
+                                var rowStartIndex = 128 * x;
+                                var rowEndIndex = rowStartIndex + 128;
+                                var rowData = this.Display[rowStartIndex..rowEndIndex];
+                                rowData.CopyTo(newDisplayArray, (x + rowsToShift) * 128);
+                            }
+
+                            this.Display = newDisplayArray;
+
+                        };
+                        break;
+                }
                 break;
             case 0x1: // JUMP!
                 {
@@ -258,25 +280,6 @@ public partial class Chip8Interpreter
                     this.Registers[registerPosX] += number;
                 }
                 break;
-            case 0x75:
-                {
-                    var registerPosX = opCode.GetXRegister();
-                    for (byte x = 0; x <= registerPosX; ++x)
-                    {
-                        RPL[x] = this.Registers[x];
-                    }
-                }
-                break;
-            case 0x85:
-                {
-                    var registerPosX = opCode.GetXRegister();
-                    for (byte x = 0; x <= registerPosX; ++x)
-                    {
-                        this.Registers[x] = RPL[x];
-                    }
-                }
-                break;
-
             case 0x8:
                 { // Logical Operators
                     var registerPosX = opCode.GetXRegister();
@@ -313,7 +316,7 @@ public partial class Chip8Interpreter
                             }
                             break;
 
-                        case 5:
+                        case 5: // Subtract
                             {
                                 var total = (vx - vy);
                                 if (vx > vy) this.Registers[0xF] = 1;
@@ -321,26 +324,26 @@ public partial class Chip8Interpreter
                                 this.Registers[registerPosX] = (byte)total;
                             }
                             break;
-                        case 6: // Left Shift
+                        case 6: // Right Shift
                             {
-                                var tempVx = this.Registers[registerPosX];
+                                var tempVx = this.Registers[registerPosY];
                                 var firstBit = tempVx & 0x01;
                                 this.Registers[registerPosX] = (byte)(tempVx >> 1);
                                 this.Registers[0xF] = (byte)firstBit;
                             }
                             break;
-                        case 7:
+                        case 7: // Vx = Vy-Vx (Carry on borrow)
                             {
                                 var total = (vy - vx);
-                                if (vx > vy) this.Registers[0xF] = 1;
-                                else if (vy > vx) this.Registers[0xF] = 0;
+                                this.Registers[0xF] = 1;
+                                if (vx > vy) this.Registers[0xF] = 0;
                                 this.Registers[registerPosX] = (byte)total;
                             }
                             break;
-                        case 0xE: // Right shift
+                        case 0xE: // Left shift
                             {
-                                var tempVx = this.Registers[registerPosX];
-                                var lastBit = (tempVx & (1 << 0x11)) != 0 ? 1 : 0;  // Does the bit at position 12  =0
+                                var tempVx = this.Registers[registerPosY];
+                                var lastBit = (tempVx & (1 << 0x1)) != 0 ? 1 : 0;  // Does the bit at position 12  =0
                                 this.Registers[registerPosX] = (byte)(tempVx << 1);
                                 this.Registers[0xF] = (byte)lastBit;
 
@@ -383,7 +386,7 @@ public partial class Chip8Interpreter
                 break;
             case 0xC: // Random
                 {
-                    var num = randomGenerator.Next(0, this.Memory.Length);
+                    var num = randomGenerator.Next(0, 256);
                     var registerPosX = opCode.GetXRegister();
                     var result = num & opCode.Get8BitConstant();
                     this.Registers[registerPosX] = (byte)result;
@@ -396,8 +399,13 @@ public partial class Chip8Interpreter
                     var registerPosY = opCode.GetYRegister();
                     var pixelHeight = opCode.GetLastNibble();
 
-                    var setPixelHeight = this.SuperChipEnabled && this.ExtendedScreenMode && pixelHeight == 0 ? (byte)16 : pixelHeight;
-                    this.Draw(this.Registers[registerPosX], this.Registers[registerPosY], setPixelHeight);
+                    if (this.SuperChipEnabled)
+                    {
+                        if (pixelHeight == 0 && this.HighResolutionMode) pixelHeight = 15;
+                        this.DrawSuperChip(this.Registers[registerPosX], this.Registers[registerPosY], pixelHeight);
+                    }
+                    else
+                        this.DrawChip8(this.Registers[registerPosX], this.Registers[registerPosY], pixelHeight);
                 }
                 break;
             case 0xE: // Skip if key
@@ -460,6 +468,7 @@ public partial class Chip8Interpreter
                             break;
                         case 0x30: // Super 8 Character
                             {
+                                if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
                                 // To be pedantic, we only should use final nibble of the register value
                                 this.IndexRegister = this.Registers[registerPosX] * 10;
                             }
@@ -493,6 +502,30 @@ public partial class Chip8Interpreter
                                 if (this.options.LoadStoreQuirks) this.IndexRegister += registerPosX;
                             }
                             break;
+                        case 0x75: // Store V0..VX in RPL user flags(X <= 7)
+                            {
+
+                                if (!SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                                if (registerPosX > 7) throw new ArgumentOutOfRangeException($"{registerPosX} : too large for RPL");
+                                for (byte registerIdx = 0; registerIdx <= registerPosX; ++registerIdx)
+                                {
+                                    this.RPLFlags[registerIdx] = this.Registers[registerIdx];
+                                }
+                            }
+                            break;
+                        case 0x85: // Read V0..VX from RPL user flags(X <= 7)
+                            {
+
+                                if (!SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                                if (registerPosX > 7) throw new ArgumentOutOfRangeException($"{registerPosX} : too large for RPL");
+                                for (byte registerIdx = 0; registerIdx <= registerPosX; ++registerIdx)
+                                {
+                                    this.Registers[registerIdx]  = this.RPLFlags[registerIdx];
+                                }
+                            }
+                            break;
+
+
 
                     }
                 }

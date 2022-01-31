@@ -17,7 +17,7 @@ namespace SuperChip.Interpreter.Host
         private bool[] chip8board;
 
         SoundEffect se;
-        private Chip8Interpreter interpreter;
+        private SuperChipInterpreter interpreter;
         private SoundEffectInstance playingSound;
         private bool playSound;
         private TimeSpan soundDuration;
@@ -35,7 +35,7 @@ namespace SuperChip.Interpreter.Host
         private void ConfigureInterpreter(string fileName)
         {
 
-            interpreter = new Chip8Interpreter(700, false);
+            interpreter = new SuperChipInterpreter(700, false,false, false);
 
             interpreter.Drawing += Interpreter_Drawing;
             interpreter.SoundOn += Interpreter_SoundOn;

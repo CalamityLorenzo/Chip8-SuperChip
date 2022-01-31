@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Chip8.Interpreter.V2\Chip8.Interpreter.V2.csproj" />
+    <ProjectReference Include="..\SuperChip.Interpreter.V3\SuperChip.Interpreter.V3.csproj" />
   </ItemGroup>
 
 </Project>

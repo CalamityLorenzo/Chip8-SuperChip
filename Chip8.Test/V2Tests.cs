@@ -936,6 +936,31 @@ namespace Chip8.Tests.V2
 
         }
 
+        [Fact(DisplayName = "FX65: Fill registers V0 to VX inclusive with the values stored in memory starting at address I. I is set to I + X + 1 after operation")]
+        public void store_memry_registers()
+        {
+            byte[] program = new byte[]
+                   {
+                    0x61, 0x99,
+                    0xA5,0x00,
+                    0xF1,0x33,
+                    0xA5,0x00,
+                    0xF3,0x65
+                   };
+            Chip8Interpreter chip8 = new(0, true, false, false);
+            chip8.Load(program);
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            
+            Assert.True(chip8.Registers[0] == 1);
+            Assert.True(chip8.Registers[1] == 5);
+            Assert.True(chip8.Registers[2] == 3);
+            Assert.True(chip8.Registers[3] == 0);
+            Assert.True(chip8.IndexRegister == 0x500 + 0x3);
+        }
     }
 
 }
