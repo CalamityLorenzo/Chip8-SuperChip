@@ -92,6 +92,58 @@
         public void DrawSuperChip(byte xPos, byte yPos, byte spriteHeight)
         {
 
+            if(!this.SuperChipEnabled) throw new Exception("SuperChip not enabled.");
+            int screenWidth = 128;
+            int screenHeight = 64;
+            
+            // the display is 128*64. When not in high res, we scale up by a factor of 2.
+            // So each pixel is 2*2. makes some calculations a little odd.
+            int increment = this.HighResolutionMode?1:2;
+
+            int spriteWidth = spriteHeight<15?8:16;
+            // the x and y can easily be over rated, we need to moduo them back,
+            var x = xPos % screenWidth;
+            var y = yPos % screenHeight;
+            this.Registers[0xF] = 0;
+
+            // pixel to draw
+            for (var spriteRow = 0; spriteRow < spriteHeight; ++spriteRow)
+            {
+                var rowData = this.Memory[this.IndexRegister + spriteRow];
+                // iterate over the display memory in rows
+                for (var spritePixel = 0; spritePixel < spriteWidth; ++spritePixel)
+                {
+                    if (x + spritePixel < screenWidth && y + spriteRow < screenHeight)
+                    {
+                        var idx = (x + spritePixel*increment) + ((y + spriteRow*increment) * 128);
+                        var screenPixel = this.Display[idx];
+                        // Test to see if this particular bit is set.
+                        var rowPixel = (rowData & (1 << spriteWidth - spritePixel)) != 0;
+                        // are we updating an already set bit.
+                        if (rowPixel & screenPixel)
+                        {
+                            this.Registers[0xf] = 1;
+                            this.Display[idx] = false;
+                        }
+                        else
+                            this.Display[idx] = screenPixel ^ rowPixel;
+
+                        var currentBit = this.Display[idx];
+                        // Non-hires
+                        if(!this.HighResolutionMode && x + spritePixel+1< screenWidth){ 
+                            this.Display[idx+1] = currentBit;        
+                        }
+                        if(!this.HighResolutionMode && y + spritePixel+1< screenWidth){ 
+                                this.Display[idx+64] = currentBit;        
+                                if(x + spritePixel+1< screenWidth)
+                                    this.Display[idx+65] = currentBit;        
+
+                        }
+                    }
+                }
+
+                }            
+
         }
 
         public void DrawChip8(byte xPos, byte yPos, byte spriteHeight)
@@ -109,14 +161,14 @@
             {
                 var rowData = this.Memory[this.IndexRegister + spriteRow];
                 // iterate over the display memory in rows
-                for (var i = 0; i < 8; ++i)
+                for (var spritePixel = 0; spritePixel < 8; ++spritePixel)
                 {
                     if (x > screenWidth - 1) break;
-                    if (x + i < screenWidth && y + spriteRow < screenHeight)
+                    if (x + spritePixel < screenWidth && y + spriteRow < screenHeight)
                     {
-                        var idx = (x + i) + ((y + spriteRow) * 64);
+                        var idx = (x + spritePixel) + ((y + spriteRow) * 64);
                         var screenPixel = this.Display[idx];
-                        var rowPixel = (rowData & (1 << 7 - i)) != 0;
+                        var rowPixel = (rowData & (1 << 7 - spritePixel)) != 0;
                         if (rowPixel & screenPixel)
                         {
                             this.Registers[0xf] = 1;

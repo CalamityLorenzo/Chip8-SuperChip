@@ -49,11 +49,12 @@ namespace SuperChip.Interpreter.Host
             base.Initialize();
             this.SpriteBatch = new SpriteBatch(this.GraphicsDevice);
             this.display = new Chip8Display(64, 32, new Vector2(0, 0), 10, 10, Color.BurlyWood, this.SpriteBatch);
-            var file = File.ReadAllBytes("Content/Beep.wav");
+            var file = File.ReadAllBytes("/home/pi/Chip8-SuperChip/SuperChip.Interpreter.Host/Content/beep.wav");
             // this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Interpreter.V2.Host\progs\chip8-roms\games\Space Invaders [David Winter].ch8");
-            this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\programs\Clock Program [Bill Fisher, 1981].ch8"); // @"E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\games\Brick (Brix hack, 1990).ch8");
+            //var fileName = "/home/pi/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/games/Bowling [Gooitzen van der Wal].ch8";
+            var fileName="/home/pi/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/hires/Hires Maze [David Winter, 199x].ch8";
+            this.ConfigureInterpreter(fileName);
             //this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\programs\IBM Logo.ch8");
-
             se = new SoundEffect(file, 16000, AudioChannels.Stereo);
             this.playingSound = se.CreateInstance();
 
@@ -91,6 +92,10 @@ namespace SuperChip.Interpreter.Host
             base.Update(gameTime);
             var state = Keyboard.GetState();
             var pressedKeys = state.GetPressedKeys();
+
+            if(pressedKeys.Contains(Keys.Escape))
+                this.Exit();
+    
             char? pressedChar = pressedKeys.Length > 0 ? (char)pressedKeys[0] : null;
 
             if (interpreter != null) interpreter.PressedKey(pressedChar);
