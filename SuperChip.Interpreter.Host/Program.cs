@@ -1,5 +1,8 @@
 namespace SuperChip.Interpreter.Host
 {
+
+    using System.Text.Json;
+    using System.IO;
     internal static class Program
     {
         /// <summary>
@@ -10,7 +13,16 @@ namespace SuperChip.Interpreter.Host
         {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
-            using (var gmw = new SuperChipGame())
+
+            var settings = new SuperChipSettings();
+#if WINBUILD
+            using FileStream fs = new FileStream("./settings/config.win.json", FileMode.Open);
+            settings= System.Text.Json.JsonSerializer.Deserialize<SuperChipSettings>(fs);
+#else
+            using FileStream fs = new FileStream("./settings/config.linux.json", FileMode.Open);
+            settings= System.Text.Json.JsonSerializer.Deserialize<SuperChipSettings>(fs);
+#endif
+            using (var gmw = new SuperChipGame(settings))
             {
                 gmw.Run();
             }

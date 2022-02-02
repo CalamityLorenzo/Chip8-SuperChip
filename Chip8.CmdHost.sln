@@ -21,8 +21,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chip8.Files", "Chip8.Files\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chip8.Test", "Chip8.Test\Chip8.Test.csproj", "{0F3198EE-F115-4357-8701-4A252E37DBD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SuperChip.Interpreter.Host-pi", "SuperChip.Interpreter.Host\SuperChip.Interpreter.Host-pi.csproj", "{9C50D5D3-4AFC-4892-965F-B45099FC4CD7}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

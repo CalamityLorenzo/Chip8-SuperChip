@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Chip8\MonoGame\MonoGame.Framework\MonoGame.Framework.WindowsDX.csproj" />
+    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.0.1641" />
     <ProjectReference Include="..\Chip8.Interpreter.V2\Chip8.Interpreter.V2.csproj" />
   </ItemGroup>
 
