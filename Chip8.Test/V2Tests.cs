@@ -1,12 +1,20 @@
-using Chip8.Interpreter.V2;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
+using Chip8.Interpreter.V2;
 
 namespace Chip8.Tests.V2
 {
     public partial class V2Tests
     {
+        private readonly ITestOutputHelper output;
+
+        public V2Tests(ITestOutputHelper output){
+            this.output = output;
+        }
+
         [Fact(DisplayName = "00E0: Clear the screen")]
         public void Cls()
         {
@@ -618,13 +626,15 @@ namespace Chip8.Tests.V2
             byte[] program = new byte[]
               {
                     0x60,0x05,
-                    0xC0,0x05
+                    0xC0,0xF0
                };
             Chip8Interpreter chip8 = new(0, false, false, false);
             chip8.Load(program);
             chip8.Tick();
             chip8.Tick();
-            Assert.False(chip8.Registers[0] != 5);
+            output.WriteLine(chip8.Registers[0].ToString());
+            // output.WriteLine(chip8.Registers[0].ToString());
+            Assert.True(chip8.Registers[0] != 5);
 
         }
 

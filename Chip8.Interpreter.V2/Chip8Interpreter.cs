@@ -297,7 +297,7 @@ public partial class Chip8Interpreter
                 break;
             case 0xC: // Random
                 {
-                    var num = randomGenerator.Next(0, 256);
+                    byte num = (byte)randomGenerator.Next(0, 256);
                     var registerPosX = opCode.GetXRegister();
                     var result = num & opCode.GetBottom8BitNumber();
                     this.Registers[registerPosX] = (byte)result;

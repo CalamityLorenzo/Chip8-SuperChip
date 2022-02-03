@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
+//using Rectangle = Microsoft.Xna.Framework;
 
 namespace SuperChip.Interpreter.Host
 {
@@ -31,16 +32,19 @@ namespace SuperChip.Interpreter.Host
 
         public void Update(GameTime gameTime, bool[] display)
         {
+           // oh yeah, taste that lack of bounds checking...
             this.DisplayArray = display;
         }
 
         public void Draw(GameTime gameTime)
         {
+            Microsoft.Xna.Framework.Rectangle sourceRect = new (50, 70, this.cellWidth*width, this.cellHeight*height );
+
             if (DisplayArray != null)
                 for (var y = 0; y < height; y++)
                     for (var x = 0; x < width; x++)
                     {
-                        if (DisplayArray[x + (y * 64)] == true)
+                        if (DisplayArray[x + (y * width)] == true)
                             spriteBatch.Draw(this.cell, Vector2.Add(position, new Vector2(x * cellWidth, y * cellHeight)), Color.White);
                     }
         }

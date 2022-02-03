@@ -46,7 +46,18 @@ namespace SuperChip.Interpreter.Host
             interpreter.SoundOn += Interpreter_SoundOn;
             interpreter.SoundOff += Interpreter_SoundOff;
             var file = File.ReadAllBytes(fileName);
-            interpreter.Load(file);
+
+                        byte[] program = new byte[]
+              {
+                    0x00,0xF,  // Enable hi-res
+                    0x60,0x05,
+                    0x61,0x05, // Position 25
+                    0xA0,000,
+                    0xD0,0x11,
+                    0x60,0x07,
+                    0xD0,0x11,
+               };
+            interpreter.Load(program);
     
         }
         protected override void Initialize()

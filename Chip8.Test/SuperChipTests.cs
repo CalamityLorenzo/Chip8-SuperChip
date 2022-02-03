@@ -1,11 +1,18 @@
 ﻿using SuperChip11Interpreter.V3;
 using System;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Chip8.Test
 {
-    public class SuperChipTests
+    public partial class SuperChipTests
     {
+        private readonly ITestOutputHelper output;
+
+        public SuperChipTests(ITestOutputHelper output){
+            this.output = output;
+        }
+
         [Fact(DisplayName = "00FD: Exit interpreter")]
         public void ExitInterpreter()
         {
@@ -175,5 +182,41 @@ namespace Chip8.Test
             Assert.Throws<ArgumentOutOfRangeException>(() => super8.Tick());
 
         }
+    
+    
+        [Fact(DisplayName = "DXYN: Draw a sprite at position VX, VY with N bytes of sprite data starting at the address stored in I. Set VF to 01 if any set pixels are changed to unset, and 00 otherwise (Hi-Res enabled)")]
+        public void Draw()
+        {
+
+            byte[] program = new byte[]
+              {
+                    0x00,0xF,  // Enable hi-res
+                    0x60,0x05,
+                    0x61,0x05, // Position 25
+                    0xA0,000,
+                    0xD0,0x11,
+                    0x60,0x07,
+                    0xD0,0x11,
+               };
+            SuperChipInterpreter chip8 = new(0, true);
+            chip8.Load(program);
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            chip8.Tick();
+            output.WriteLine((chip8.Display[650] == true).ToString());
+            output.WriteLine((chip8.Display[651] == true).ToString());
+            output.WriteLine((chip8.Display[652] == true).ToString());
+            Assert.True(chip8.Display[650] == true && chip8.Display[651] == true && chip8.Display[652] == true && chip8.Display[653] == true);
+            Assert.True(chip8.Registers[0xf] == 0);
+
+            chip8.Tick();
+            chip8.Tick();
+            Assert.True(chip8.Display[654] == false && chip8.Display[655] == false && chip8.Display[656] == true && chip8.Display[657] == true);
+            Assert.True(chip8.Registers[0xf] == 1);
+
+        }
+
     }
 }
