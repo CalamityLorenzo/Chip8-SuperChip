@@ -38,7 +38,7 @@ namespace SuperChip.Interpreter.Host
         private void ConfigureInterpreter(string fileName)
         {
 
-            interpreter = new SuperChipInterpreter(700, this.SuperChipSettings.Switches.LoadStoreQuirk,
+            interpreter = new SuperChipInterpreter(0, 7, this.SuperChipSettings.Switches.LoadStoreQuirk,
                  this.SuperChipSettings.Switches.ShiftQuirk, 
                  this.SuperChipSettings.Switches.JumpQuirk);
 

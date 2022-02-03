@@ -27,6 +27,7 @@ public partial class SuperChipInterpreter
     public byte SoundTimer = 0;
     private Chip8Timer instructionTimer;
     private Chip8Timer sixtyHertzTimer;
+    private int instructionsPerTick;
 
     public byte? CurrentKey { get; private set; }
 
@@ -34,14 +35,15 @@ public partial class SuperChipInterpreter
     public bool SuperChipEnabled { get; }
     public bool HighResolutionMode { get; private set; }
 
-    public SuperChipInterpreter(int instructionsPerSecond, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk)
+    public SuperChipInterpreter(int ticksPerSecond, int instructionsPerTick, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk)
     {
         var startTime = DateTime.Now;
-        int millisecondsToNextInstruction = (int)Math.Abs(1000f / instructionsPerSecond);
+        int millisecondsToNextInstruction = (int)Math.Abs(1000f / ticksPerSecond);
         int sixtyCycleHum = (int)Math.Abs(1000f / 60);
         this.instructionTimer = new Chip8Timer(startTime, millisecondsToNextInstruction);
         this.sixtyHertzTimer = new Chip8Timer(startTime, sixtyCycleHum);
 
+        this.instructionsPerTick = instructionsPerTick;
         this.options = new ChipMachineOptions
         {
             LoadStoreQuirks = enableLoadQuirks,
@@ -53,6 +55,10 @@ public partial class SuperChipInterpreter
 
     }
 
+    public SuperChipInterpreter(int ticksPerSecond, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk) : this(ticksPerSecond, 0, false, false, false)
+    {
+
+    }
 
     public SuperChipInterpreter(int instructionsPerSecond, bool enableSuperChip) : this(instructionsPerSecond, false, false, false)
     {
@@ -71,12 +77,17 @@ public partial class SuperChipInterpreter
 
         if (this.instructionTimer.GetTicked())
         {
-            this.FetchDecodeExecute();
+            if (this.instructionsPerTick > 0)
+            {
+                for (var x = 0; x < this.instructionsPerTick; ++x)
+                    this.FetchDecodeExecute();
+            }
+            else
+                this.FetchDecodeExecute();
         }
 
         if (soundTickAccumulator == 0) soundtickduration = new TimeSpan(DateTime.Now.Ticks);
-
-
+        
         if (this.sixtyHertzTimer.GetTicked())
         {
             soundTickAccumulator += 1;
@@ -520,7 +531,7 @@ public partial class SuperChipInterpreter
                                 if (registerPosX > 7) throw new ArgumentOutOfRangeException($"{registerPosX} : too large for RPL");
                                 for (byte registerIdx = 0; registerIdx <= registerPosX; ++registerIdx)
                                 {
-                                    this.Registers[registerIdx]  = this.RPLFlags[registerIdx];
+                                    this.Registers[registerIdx] = this.RPLFlags[registerIdx];
                                 }
                             }
                             break;

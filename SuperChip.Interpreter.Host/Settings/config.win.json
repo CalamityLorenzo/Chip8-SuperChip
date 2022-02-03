@@ -1,6 +1,6 @@
 {
     "Sound" : "./Content/beep.wav",
-    "Rom":"D:/Code/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/hires/Hires Worm V4 [RB-Revival Studios, 2007].ch8",
+    "Rom":"D:/Code/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/games/Deflection [John Fort].ch8",
     "SuperChipEnabled":true,
     "Settings":{
         "LoadStoreQuirk":false,
