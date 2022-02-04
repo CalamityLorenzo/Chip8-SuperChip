@@ -30,6 +30,7 @@ namespace SuperChip.Interpreter.Host
         public SuperChipGame(SuperChipSettings settings)
         {
             this.graphics = new GraphicsDeviceManager(this);
+        
             this.SuperChipSettings = settings;
             // E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\games\Brick (Brix hack, 1990).ch8
         }
@@ -82,6 +83,11 @@ namespace SuperChip.Interpreter.Host
         protected override void Initialize()
         {
             base.Initialize();
+
+            this.graphics.IsFullScreen=false;
+            this.graphics.PreferredBackBufferWidth=800;
+            this.graphics.PreferredBackBufferHeight=800;
+            this.graphics.ApplyChanges();
             this.SpriteBatch = new SpriteBatch(this.GraphicsDevice);
             // var file = File.ReadAllBytes("/home/pi/Chip8-SuperChip/SuperChip.Interpreter.Host/Content/beep.wav");
             var beepWav = File.ReadAllBytes(this.SuperChipSettings.Sound);

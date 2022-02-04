@@ -38,10 +38,10 @@ public partial class SuperChipInterpreter
     public SuperChipInterpreter(int ticksPerSecond, int instructionsPerTick, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk)
     {
         var startTime = DateTime.Now;
-        int millisecondsToNextInstruction = (int)Math.Abs(1000f / ticksPerSecond);
+        int millisecondsToNextInstruction = ticksPerSecond!=0? (int)Math.Abs(1000f / ticksPerSecond): 0;
         int sixtyCycleHum = (int)Math.Abs(1000f / 60);
-        this.instructionTimer = new Chip8Timer(startTime, millisecondsToNextInstruction);
-        this.sixtyHertzTimer = new Chip8Timer(startTime, sixtyCycleHum);
+        this.instructionTimer = new Chip8Timer(startTime, millisecondsToNextInstruction, "Instructions");
+        this.sixtyHertzTimer = new Chip8Timer(startTime, sixtyCycleHum, "Sixty hertz") ;
 
         this.instructionsPerTick = instructionsPerTick;
         this.options = new ChipMachineOptions
@@ -78,8 +78,8 @@ public partial class SuperChipInterpreter
     {
         this.instructionTimer.Update(DateTime.Now);
         this.sixtyHertzTimer.Update(DateTime.Now);
-
-        if (this.instructionTimer.GetTicked())
+    var ticked = this.instructionTimer.GetTicked();
+        if (ticked==true)
         {
             if (this.instructionsPerTick > 0)
             {

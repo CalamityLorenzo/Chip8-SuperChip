@@ -20,7 +20,7 @@ namespace SuperChip.Interpreter.Host
             using FileStream fs = new FileStream("./settings/config.win.json", FileMode.Open);
             settings= System.Text.Json.JsonSerializer.Deserialize<SuperChipSettings>(fs);
 #else
-            using FileStream fs = new FileStream("./settings/config.linux.json", FileMode.Open);
+            using FileStream fs = new FileStream("./Settings/config.linux.json", FileMode.Open);
             settings= System.Text.Json.JsonSerializer.Deserialize<SuperChipSettings>(fs);
 #endif
             using (var gmw = new SuperChipGame(settings))
