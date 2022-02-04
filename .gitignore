@@ -335,3 +335,4 @@ ASALocalRun/
 /Chip8.Files/progs/chip8-roms/
 
 .ionide
+SuperChip.Interpreter.Host/mapdump.csv
