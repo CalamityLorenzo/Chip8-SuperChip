@@ -191,10 +191,10 @@ namespace Chip8.Test
             byte[] program = new byte[]
               {
                     0x00,0xF,  // Enable hi-res
-                    0x60,0x05,
-                    0x61,0x05, // Position 25
-                    0xA0,000,
-                    0xD0,0x11,
+                    0x60,0x05,  //(5)
+                    0x61,0x05,  // 5
+                    0xA0,000,   
+                    0xD0,0x11,  
                     0x60,0x07,
                     0xD0,0x11,
                };

@@ -16,6 +16,7 @@ namespace SuperChip.Interpreter.Host
 
             var settings = new SuperChipSettings();
 #if WINBUILD
+
             using FileStream fs = new FileStream("./settings/config.win.json", FileMode.Open);
             settings= System.Text.Json.JsonSerializer.Deserialize<SuperChipSettings>(fs);
 #else

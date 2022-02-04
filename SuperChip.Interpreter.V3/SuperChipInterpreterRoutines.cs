@@ -1,4 +1,6 @@
-﻿namespace SuperChip11Interpreter.V3
+﻿using System.Diagnostics;
+
+namespace SuperChip11Interpreter.V3
 {
 
     public class Chip8DrawingEventArgs : EventArgs
@@ -92,18 +94,18 @@
         public void DrawSuperChip(byte xPos, byte yPos, byte spriteHeight)
         {
 
-            if(!this.SuperChipEnabled) throw new Exception("SuperChip not enabled.");
+            if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled.");
             int screenWidth = 128;
             int screenHeight = 64;
-            
+
             // the display is 128*64. When not in high res, we scale up by a factor of 2.
             // So each pixel is 2*2. makes some calculations a little odd.
-            int increment = this.HighResolutionMode?1:2;
+            int increment = this.HighResolutionMode ? 1 : 2;
 
-            int spriteWidth = spriteHeight<15?8:16;
+            int spriteWidth = spriteHeight < 16 ? 8 : 16;
             // the x and y can easily be over rated, we need to moduo them back,
-            var x = xPos % screenWidth;
-            var y = yPos % screenHeight;
+            var x = (xPos * increment) % screenWidth;
+            var y = (yPos * increment) % screenHeight;
             this.Registers[0xF] = 0;
 
             // pixel to draw
@@ -113,12 +115,14 @@
                 // iterate over the display memory in rows
                 for (var spritePixel = 0; spritePixel < spriteWidth; ++spritePixel)
                 {
-                    if (x + spritePixel < screenWidth && y + spriteRow < screenHeight)
+                    var currentXPos = x + (spritePixel * increment);
+                    var currentYPos = y + (spriteRow * increment);
+                    if (currentXPos < screenWidth && currentYPos < screenHeight)
                     {
-                        var idx = (x + spritePixel*increment) + ((y + spriteRow*increment) * 128);
+                        var idx = currentXPos + (currentYPos * 128);
                         var screenPixel = this.Display[idx];
                         // Test to see if this particular bit is set.
-                        var rowPixel = (rowData & (1 << spriteWidth - spritePixel)) != 0;
+                        var rowPixel = (rowData & (1 << (spriteWidth-1) - spritePixel)) != 0;
                         // are we updating an already set bit.
                         if (rowPixel & screenPixel)
                         {
@@ -130,19 +134,28 @@
 
                         var currentBit = this.Display[idx];
                         // Non-hires
-                        if(!this.HighResolutionMode && x + spritePixel+1< screenWidth){ 
-                            this.Display[idx+1] = currentBit;        
+                        if (!this.HighResolutionMode && currentXPos + 1 < screenWidth)
+                        {
+                            this.Display[idx + 1] = currentBit;
                         }
-                        if(!this.HighResolutionMode && y + spritePixel+1< screenWidth){ 
-                                this.Display[idx+64] = currentBit;        
-                                if(x + spritePixel+1< screenWidth)
-                                    this.Display[idx+65] = currentBit;        
+                        else{
+                            Debug.WriteLine($"X: out of range {currentXPos}");
+                        }
+                        if (!this.HighResolutionMode && currentYPos + 1 < screenWidth)
+                        {
+                            this.Display[idx + 128] = currentBit;
+                            if (currentXPos + 1 < screenWidth)
+                                this.Display[idx + 129] = currentBit;
 
+                        }
+                        else{
+                            Debug.WriteLine($"Y: out of range {currentYPos}");
                         }
                     }
                 }
 
-                }            
+            }
+            this.OnDrawingEventRaised();
 
         }
 

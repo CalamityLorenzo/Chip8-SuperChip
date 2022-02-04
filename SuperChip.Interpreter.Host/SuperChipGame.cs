@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using SuperChip11Interpreter.V3;
 using System.Diagnostics;
+using System.Text;
 using Color = Microsoft.Xna.Framework.Color;
 using Keys = Microsoft.Xna.Framework.Input;
 
@@ -38,33 +39,50 @@ namespace SuperChip.Interpreter.Host
         private void ConfigureInterpreter(string fileName)
         {
 
-            interpreter = new SuperChipInterpreter(0, 7, this.SuperChipSettings.Switches.LoadStoreQuirk,
-                 this.SuperChipSettings.Switches.ShiftQuirk, 
-                 this.SuperChipSettings.Switches.JumpQuirk);
+            if (!this.SuperChipSettings.SuperChipEnabled){
+                interpreter = new SuperChipInterpreter(0, 7, this.SuperChipSettings.Switches.LoadStoreQuirk,
+                     this.SuperChipSettings.Switches.ShiftQuirk,
+                     this.SuperChipSettings.Switches.JumpQuirk);
+            }
+            else
+                interpreter = new SuperChipInterpreter(0, 7, true);
 
             interpreter.Drawing += Interpreter_Drawing;
             interpreter.SoundOn += Interpreter_SoundOn;
             interpreter.SoundOff += Interpreter_SoundOff;
+
+            this.display = this.SuperChipSettings.SuperChipEnabled 
+                                        ? new Chip8Display(128, 64, new Vector2(0, 0), 5, 5, Color.BurlyWood, this.SpriteBatch)
+                                        : new Chip8Display(64, 32, new Vector2(0, 0), 10, 10, Color.BurlyWood, this.SpriteBatch);
+
             var file = File.ReadAllBytes(fileName);
 
-                        byte[] program = new byte[]
-              {
-                    0x00,0xF,  // Enable hi-res
-                    0x60,0x05,
-                    0x61,0x05, // Position 25
-                    0xA0,000,
-                    0xD0,0x11,
-                    0x60,0x07,
-                    0xD0,0x11,
-               };
-            interpreter.Load(program);
-    
+            byte[] program = new byte[]
+             {
+                    0x00,0xFF,  // Enable hi-res
+                    0x60,0x00, // 5
+                    0x61,0x00, // 5
+                    0xA0,0x00,
+                    0x63,0x00,
+                    0xF3,0x30,
+                    0xD0,0x1A,
+                    0x60,0x1F, // 5
+                    0x61,0x05, // 5
+                    0x63,0x01,
+                    0xF3,0x30,
+                    0xD0,0x1A,
+                    // 0x60,0x09, // 7
+                    // 0x61,0x05,  // 6
+                    // 0xD0,0x11,
+                    0x12,0x18   
+              };
+            interpreter.Load(file);
+
         }
         protected override void Initialize()
         {
             base.Initialize();
             this.SpriteBatch = new SpriteBatch(this.GraphicsDevice);
-            this.display = new Chip8Display(64, 32, new Vector2(0, 0), 10, 10, Color.BurlyWood, this.SpriteBatch);
             // var file = File.ReadAllBytes("/home/pi/Chip8-SuperChip/SuperChip.Interpreter.Host/Content/beep.wav");
             var beepWav = File.ReadAllBytes(this.SuperChipSettings.Sound);
             // this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Interpreter.V2.Host\progs\chip8-roms\games\Space Invaders [David Winter].ch8");
@@ -105,6 +123,24 @@ namespace SuperChip.Interpreter.Host
             playingSound.Play();
         }
 
+        private void DumpDisplay()
+        {
+
+            var display = this.interpreter.Display;
+            var sb = new StringBuilder();
+            if (this.interpreter.SuperChipEnabled)
+            {
+                for (var x = 0; x < 64; ++x)
+                {
+                    var items = display.Skip(x * 128).Take(64);
+                    sb.AppendJoin(",", items);
+                    sb.AppendLine();
+                }
+            }
+
+            File.WriteAllText(Path.Combine(System.Environment.CurrentDirectory, "mapdump.csv"), sb.ToString());
+        }
+
         protected override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
@@ -113,6 +149,9 @@ namespace SuperChip.Interpreter.Host
 
             if (pressedKeys.Contains(Keys.Keys.Escape))
                 this.Exit();
+
+            if (pressedKeys.Contains(Keys.Keys.Left))
+                this.DumpDisplay();
 
             char? pressedChar = pressedKeys.Length > 0 ? (char)pressedKeys[0] : null;
 

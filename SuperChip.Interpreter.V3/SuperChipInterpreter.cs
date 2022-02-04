@@ -60,11 +60,15 @@ public partial class SuperChipInterpreter
 
     }
 
-    public SuperChipInterpreter(int instructionsPerSecond, bool enableSuperChip) : this(instructionsPerSecond, false, false, false)
+    public SuperChipInterpreter(int ticksPerSecond, bool enableSuperChip) : this(ticksPerSecond, false, false, false)
     {
         this.SuperChipEnabled = enableSuperChip;
     }
 
+    public SuperChipInterpreter(int ticksPerSecond, int instructionsPerTick, bool enableSuperChip) : this(ticksPerSecond, instructionsPerTick, false, false, false)
+    {
+        this.SuperChipEnabled = enableSuperChip;
+    }
 
     /// <summary>
     /// This should run 1 instruction at a time
@@ -87,7 +91,7 @@ public partial class SuperChipInterpreter
         }
 
         if (soundTickAccumulator == 0) soundtickduration = new TimeSpan(DateTime.Now.Ticks);
-        
+
         if (this.sixtyHertzTimer.GetTicked())
         {
             soundTickAccumulator += 1;
@@ -155,19 +159,19 @@ public partial class SuperChipInterpreter
 
                     case 0xFD: // Exit interpreter     
                         {
-                            if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                            if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled");
                             return;
                         }
                         break;
                     case 0xFE: // Disable high-resolution mode
                         {
-                            if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                            if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled");
                             this.HighResolutionMode = false;
                         }
                         break;
                     case 0xFF: // Enable high-resolution mode
                         {
-                            if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                            if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled");
                             this.HighResolutionMode = true;
                         }
                         break;
@@ -176,7 +180,7 @@ public partial class SuperChipInterpreter
                             this.ClearDisplay();
                         }
                         break;
-                    case 0xEE:
+                    case 0xEE: // Return from subroutine
                         {
                             var returnAddress = this.Stack.Pop();
                             this.ProgramCounter = returnAddress;
@@ -210,7 +214,6 @@ public partial class SuperChipInterpreter
                                 var rowStartIndex = 128 * y;
                                 Array.Copy(this.Display, rowStartIndex + amountToShift, newDisplay, rowStartIndex, 64 - amountToShift);
                             }
-
                             this.Display = newDisplay;
                         }
                         break;
@@ -412,7 +415,7 @@ public partial class SuperChipInterpreter
 
                     if (this.SuperChipEnabled)
                     {
-                        if (pixelHeight == 0 && this.HighResolutionMode) pixelHeight = 15;
+                        if (pixelHeight == 0 && this.HighResolutionMode) pixelHeight = 16;
                         this.DrawSuperChip(this.Registers[registerPosX], this.Registers[registerPosY], pixelHeight);
                     }
                     else
@@ -477,11 +480,11 @@ public partial class SuperChipInterpreter
                                 this.IndexRegister = this.Registers[registerPosX] * 5;
                             }
                             break;
-                        case 0x30: // Super 8 Character
+                        case 0x30: // Super Chip Character
                             {
-                                if (!this.SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                                if (!this.SuperChipEnabled) throw new Exception("SuperChip not enabled");
                                 // To be pedantic, we only should use final nibble of the register value
-                                this.IndexRegister = this.Registers[registerPosX] * 10;
+                                this.IndexRegister = (this.Registers[registerPosX] * 10) + 0x50;
                             }
                             break;
                         case 0x33: // BCD
@@ -516,7 +519,7 @@ public partial class SuperChipInterpreter
                         case 0x75: // Store V0..VX in RPL user flags(X <= 7)
                             {
 
-                                if (!SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                                if (!SuperChipEnabled) throw new Exception("SuperChip not enabled");
                                 if (registerPosX > 7) throw new ArgumentOutOfRangeException($"{registerPosX} : too large for RPL");
                                 for (byte registerIdx = 0; registerIdx <= registerPosX; ++registerIdx)
                                 {
@@ -527,7 +530,7 @@ public partial class SuperChipInterpreter
                         case 0x85: // Read V0..VX from RPL user flags(X <= 7)
                             {
 
-                                if (!SuperChipEnabled) throw new Exception("Super 8 not enabled");
+                                if (!SuperChipEnabled) throw new Exception("SuperChip not enabled");
                                 if (registerPosX > 7) throw new ArgumentOutOfRangeException($"{registerPosX} : too large for RPL");
                                 for (byte registerIdx = 0; registerIdx <= registerPosX; ++registerIdx)
                                 {
