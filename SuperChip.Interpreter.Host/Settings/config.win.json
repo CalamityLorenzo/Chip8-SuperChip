@@ -1,10 +1,10 @@
 {
-    "Sound" : "./Content/beep.wav",
-    "Rom":"D:/Code/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/games/Rocket [Joseph Weisbecker, 1978].ch8",
-    "SuperChipEnabled":false,
     "Settings":{
         "LoadStoreQuirk":false,
         "ShiftQuirk":false,
         "JumpQuirk":false
-    }
+    },
+    "Sound" : "./Content/beep.wav",
+    "Rom":"D:/Code/Chip8-SuperChip/Chip8.Files/progs/test_opcode.ch8",
+    "SuperChipEnabled":true
 }

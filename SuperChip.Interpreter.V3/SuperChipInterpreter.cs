@@ -5,15 +5,14 @@ namespace SuperChip11Interpreter.V3;
 
 public partial class SuperChipInterpreter
 {
-
     public event EventHandler<Chip8DrawingEventArgs> Drawing;
     public event EventHandler SoundOn;
     public event EventHandler SoundOff;
 
     public int IndexRegister = 0;
     public byte[] Memory = new byte[4096]; // This is 12 bits.
-    public Dictionary<byte, byte> Registers = new Dictionary<byte, byte>(16);
-    public Dictionary<byte, byte> RPLFlags = new Dictionary<byte, byte>(16);
+    public Dictionary<byte, byte> Registers {get; private set;} = new Dictionary<byte, byte>(16);
+    public Dictionary<byte, byte> RPLFlags {get; private set;} = new Dictionary<byte, byte>(16);
 
     public Stack<ushort> Stack = new Stack<ushort>();
     public bool[] Display = new bool[128 * 64];
@@ -78,7 +77,7 @@ public partial class SuperChipInterpreter
     {
         this.instructionTimer.Update(DateTime.Now);
         this.sixtyHertzTimer.Update(DateTime.Now);
-    var ticked = this.instructionTimer.GetTicked();
+        var ticked = this.instructionTimer.GetTicked();
         if (ticked==true)
         {
             if (this.instructionsPerTick > 0)

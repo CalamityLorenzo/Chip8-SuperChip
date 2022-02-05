@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Text;
 using Color = Microsoft.Xna.Framework.Color;
 using Keys = Microsoft.Xna.Framework.Input;
+using Point = Microsoft.Xna.Framework.Point;
 
 namespace SuperChip.Interpreter.Host
 {
@@ -30,7 +31,7 @@ namespace SuperChip.Interpreter.Host
         public SuperChipGame(SuperChipSettings settings)
         {
             this.graphics = new GraphicsDeviceManager(this);
-        
+
             this.SuperChipSettings = settings;
             // E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\games\Brick (Brix hack, 1990).ch8
         }
@@ -40,21 +41,21 @@ namespace SuperChip.Interpreter.Host
         private void ConfigureInterpreter(string fileName)
         {
 
-            if (!this.SuperChipSettings.SuperChipEnabled){
+            if (!this.SuperChipSettings.SuperChipEnabled)
+            {
                 interpreter = new SuperChipInterpreter(0, 7, this.SuperChipSettings.Switches.LoadStoreQuirk,
                      this.SuperChipSettings.Switches.ShiftQuirk,
                      this.SuperChipSettings.Switches.JumpQuirk);
+                this.display = new Chip8Display(64, 32, new Point(0, 0), 10, 10, Color.BurlyWood, this.SpriteBatch);
             }
             else
+            {
                 interpreter = new SuperChipInterpreter(0, 7, true);
-
+                this.display = new Chip8Display(128, 64, new Point(0, 0), 10,10, Color.BurlyWood, this.SpriteBatch);
+            }
             interpreter.Drawing += Interpreter_Drawing;
             interpreter.SoundOn += Interpreter_SoundOn;
             interpreter.SoundOff += Interpreter_SoundOff;
-
-            this.display = this.SuperChipSettings.SuperChipEnabled 
-                                        ? new Chip8Display(128, 64, new Vector2(0, 0), 5, 5, Color.BurlyWood, this.SpriteBatch)
-                                        : new Chip8Display(64, 32, new Vector2(0, 0), 10, 10, Color.BurlyWood, this.SpriteBatch);
 
             var file = File.ReadAllBytes(fileName);
 
@@ -75,7 +76,7 @@ namespace SuperChip.Interpreter.Host
                     // 0x60,0x09, // 7
                     // 0x61,0x05,  // 6
                     // 0xD0,0x11,
-                    0x12,0x18   
+                    0x12,0x18
               };
             interpreter.Load(file);
 
@@ -84,9 +85,9 @@ namespace SuperChip.Interpreter.Host
         {
             base.Initialize();
 
-            this.graphics.IsFullScreen=false;
-            this.graphics.PreferredBackBufferWidth=800;
-            this.graphics.PreferredBackBufferHeight=800;
+            this.graphics.IsFullScreen = false;
+            this.graphics.PreferredBackBufferWidth = 1800;
+            this.graphics.PreferredBackBufferHeight = 1000;
             this.graphics.ApplyChanges();
             this.SpriteBatch = new SpriteBatch(this.GraphicsDevice);
             // var file = File.ReadAllBytes("/home/pi/Chip8-SuperChip/SuperChip.Interpreter.Host/Content/beep.wav");

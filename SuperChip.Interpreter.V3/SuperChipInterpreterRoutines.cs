@@ -108,11 +108,11 @@ namespace SuperChip11Interpreter.V3
             var y = (yPos * increment) % screenHeight;
             this.Registers[0xF] = 0;
 
-            // pixel to draw
+            // rOW
             for (var spriteRow = 0; spriteRow < spriteHeight; ++spriteRow)
             {
                 var rowData = this.Memory[this.IndexRegister + spriteRow];
-                // iterate over the display memory in rows
+                // width
                 for (var spritePixel = 0; spritePixel < spriteWidth; ++spritePixel)
                 {
                     var currentXPos = x + (spritePixel * increment);
