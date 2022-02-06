@@ -10,7 +10,7 @@ internal class Chip8Timer
     public string Name { get; }
     private bool ticked { get; set; }
 
-    public Chip8Timer(DateTime dateTime, int milliseconds, string name ="")
+    public Chip8Timer(DateTime dateTime, int milliseconds, string name = "")
     {
         this.startTime = dateTime;
         this.millisecondDiff = milliseconds;
@@ -21,15 +21,17 @@ internal class Chip8Timer
     public bool GetTicked()
     {
         var tmp = ticked;
-        //if (ticked == true) ticked = false;
+#if DEBUG_TIMER   //if (ticked == true) ticked = false;
         Debug.WriteLine($"{Name} : {tmp}");
+#endif
         return tmp;
     }
 
     public void Update(DateTime current)
     {
         var currentTime = current;
-        if (millisecondDiff > 0){
+        if (millisecondDiff > 0)
+        {
 
             var diff = currentTime - previousTime;
             this.ticked = diff.TotalMilliseconds >= millisecondDiff ? true : false;

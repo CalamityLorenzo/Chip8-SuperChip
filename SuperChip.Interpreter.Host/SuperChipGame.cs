@@ -2,12 +2,14 @@
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using SuperChip.Interpreter.Host.UI;
 using SuperChip11Interpreter.V3;
 using System.Diagnostics;
 using System.Text;
 using Color = Microsoft.Xna.Framework.Color;
 using Keys = Microsoft.Xna.Framework.Input;
 using Point = Microsoft.Xna.Framework.Point;
+using ButtonState = Microsoft.Xna.Framework.Input.ButtonState;
 
 namespace SuperChip.Interpreter.Host
 {
@@ -28,15 +30,17 @@ namespace SuperChip.Interpreter.Host
         private TimeSpan soundDuration;
 
 
+        SpriteFont spr;
+        FilePicker fp;
+        private bool isReleased;
+
         public SuperChipGame(SuperChipSettings settings)
         {
             this.graphics = new GraphicsDeviceManager(this);
-
+            this.Content.RootDirectory = "./Content";
             this.SuperChipSettings = settings;
             // E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\games\Brick (Brix hack, 1990).ch8
         }
-
-
 
         private void ConfigureInterpreter(string fileName)
         {
@@ -51,16 +55,20 @@ namespace SuperChip.Interpreter.Host
             else
             {
                 interpreter = new SuperChipInterpreter(0, 7, true);
-                this.display = new Chip8Display(128, 64, new Point(0, 0), 10,10, Color.BurlyWood, this.SpriteBatch);
+                this.display = new Chip8Display(128, 64, new Point(0, 0), 10, 10, Color.BurlyWood, this.SpriteBatch);
             }
             interpreter.Drawing += Interpreter_Drawing;
             interpreter.SoundOn += Interpreter_SoundOn;
             interpreter.SoundOff += Interpreter_SoundOff;
 
             var file = File.ReadAllBytes(fileName);
+            this.LoadFile(file);
+        }
 
+        private void LoadFile(byte[] file)
+        {
             byte[] program = new byte[]
-             {
+ {
                     0x00,0xFF,  // Enable hi-res
                     0x60,0x00, // 5
                     0x61,0x00, // 5
@@ -77,30 +85,41 @@ namespace SuperChip.Interpreter.Host
                     // 0x61,0x05,  // 6
                     // 0xD0,0x11,
                     0x12,0x18
-              };
+  };
             interpreter.Load(file);
-
         }
+
         protected override void Initialize()
         {
             base.Initialize();
-
+            this.IsMouseVisible = true;
             this.graphics.IsFullScreen = false;
-            this.graphics.PreferredBackBufferWidth = 1800;
-            this.graphics.PreferredBackBufferHeight = 1000;
+            this.graphics.PreferredBackBufferWidth = 800;
+            this.graphics.PreferredBackBufferHeight = 600;
             this.graphics.ApplyChanges();
             this.SpriteBatch = new SpriteBatch(this.GraphicsDevice);
             // var file = File.ReadAllBytes("/home/pi/Chip8-SuperChip/SuperChip.Interpreter.Host/Content/beep.wav");
             var beepWav = File.ReadAllBytes(this.SuperChipSettings.Sound);
-            // this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Interpreter.V2.Host\progs\chip8-roms\games\Space Invaders [David Winter].ch8");
-            //var fileName = "/home/pi/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/games/Bowling [Gooitzen van der Wal].ch8";
-            // var fileName="/home/pi/Chip8-SuperChip/Chip8.Files/progs/chip8-roms/hires/Hires Maze [David Winter, 199x].ch8";
+
+            this.spr = Content.Load<SpriteFont>("bin/Windows/consolas");
+
             var fileName = this.SuperChipSettings.Rom;
             this.ConfigureInterpreter(fileName);
             //this.ConfigureInterpreter(@"E:\code\Chip8.CmdHost\Chip8.Files\progs\chip8-roms\programs\IBM Logo.ch8");
             se = new SoundEffect(beepWav, 16000, AudioChannels.Mono);
             this.playingSound = se.CreateInstance();
+            fp = new FilePicker(this.SpriteBatch, this.spr, @"c:\");
+            fp.OnFileSelected += this.FileSelected;
+        }
 
+        private void FileSelected(object? sender, FileSelectedEventArgs e)
+        {
+            if (e.Filename.EndsWith("ch8"))
+            {
+                var file = File.ReadAllBytes(e.Filename);
+                this.interpreter.Load(file);
+                this.fp.IsActivated = false;
+            }
         }
 
         private void Interpreter_SoundOff(object? sender, EventArgs e)
@@ -123,7 +142,6 @@ namespace SuperChip.Interpreter.Host
             if (chip8board == null) chip8board = new bool[e.Display.Length];
             e.Display.CopyTo(this.chip8board, 0);
         }
-
 
         private void CreateBeep()
         {
@@ -151,6 +169,14 @@ namespace SuperChip.Interpreter.Host
         protected override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
+
+            var MouseState = Mouse.GetState();
+            if (MouseState.LeftButton == ButtonState.Pressed && isReleased == true)
+            {
+                fp.Click(MouseState.X, MouseState.Y);
+                isReleased = false;
+            }
+
             var state = Keyboard.GetState();
             var pressedKeys = state.GetPressedKeys();
 
@@ -168,6 +194,9 @@ namespace SuperChip.Interpreter.Host
             if (interpreter != null) interpreter.Tick();
 
             if (this.playSound) CreateBeep();
+
+            fp.Update(gameTime);
+            if (MouseState.LeftButton == ButtonState.Released && isReleased == false) { isReleased = true; }
         }
 
         protected override void Draw(GameTime gameTime)
@@ -175,7 +204,10 @@ namespace SuperChip.Interpreter.Host
             this.GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.OrangeRed);
             this.SpriteBatch.Begin();
 
-            this.display.Draw(gameTime);
+            this.SpriteBatch.DrawString(this.spr, "0xBF, 0x12", new Vector2(100, 200), Color.Black);
+
+            fp.Draw(gameTime);
+            //   this.display.Draw(gameTime);
             this.SpriteBatch.End();
         }
     }

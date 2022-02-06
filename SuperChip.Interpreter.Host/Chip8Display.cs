@@ -32,32 +32,32 @@ namespace SuperChip.Interpreter.Host
             cell.SetData<Color>(Enumerable.Range(0, cellWidth * cellHeight).Select(a => cellColor).ToArray());
             this.DisplayArray = new bool[width * height];
 
-            this.BorderWidth=3;
-            this.Padding=3;
+            this.BorderWidth = 3;
+            this.Padding = 3;
         }
 
         public void Update(GameTime gameTime, bool[] display)
         {
-           // oh yeah, taste that lack of bounds checking...
+            // oh yeah, taste that lack of bounds checking...
             this.DisplayArray = display;
         }
 
         public void Draw(GameTime gameTime)
         {
-            Microsoft.Xna.Framework.Rectangle sourceRect = new (50, 70, this.cellWidth*width, this.cellHeight*height );
+            Microsoft.Xna.Framework.Rectangle sourceRect = new(50, 70, this.cellWidth * width, this.cellHeight * height);
 
-//  Border first
-                spriteBatch.Draw(this.cell, new Rectangle(this.position.X, this.position.Y, 3, height*cellHeight), Color.White);
-                spriteBatch.Draw(this.cell, new Rectangle(this.position.X, this.position.Y, this.width*cellWidth, 3), Color.White);
-                spriteBatch.Draw(this.cell, new Rectangle(this.position.X + (width*cellWidth), this.position.Y, 3, height*cellHeight), Color.White);
-                spriteBatch.Draw(this.cell, new Rectangle(this.position.X, this.position.Y+(height*cellHeight), this.width*cellWidth, 3), Color.White);
-                var positionVector = position.ToVector2();
+            //  Border first
+            spriteBatch.Draw(this.cell, new Rectangle(this.position.X, this.position.Y, 3, height * cellHeight), Color.White);
+            spriteBatch.Draw(this.cell, new Rectangle(this.position.X, this.position.Y, this.width * cellWidth, 3), Color.White);
+            spriteBatch.Draw(this.cell, new Rectangle(this.position.X + (width * cellWidth), this.position.Y, 3, height * cellHeight), Color.White);
+            spriteBatch.Draw(this.cell, new Rectangle(this.position.X, this.position.Y + (height * cellHeight), this.width * cellWidth, 3), Color.White);
+            var positionVector = position.ToVector2();
             if (DisplayArray != null)
                 for (var y = 0; y < height; y++)
                     for (var x = 0; x < width; x++)
                     {
                         if (DisplayArray[x + (y * width)] == true)
-                            spriteBatch.Draw(this.cell, Vector2.Add(positionVector, new Vector2(x * cellWidth +( BorderWidth + Padding), y * cellHeight+ (BorderWidth + Padding))), Color.White);
+                            spriteBatch.Draw(this.cell, Vector2.Add(positionVector, new Vector2(x * cellWidth + (BorderWidth + Padding), y * cellHeight + (BorderWidth + Padding))), Color.White);
                     }
         }
 
