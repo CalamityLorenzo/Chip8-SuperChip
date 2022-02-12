@@ -10,6 +10,7 @@ namespace SuperChip.Interpreter.Host
         public string Rom { get; set; } ="";
         public bool SuperChipEnabled { get; set; }
         public Switches Switches { get; set; }
+        public string FilePickerDirectory { get; internal set; }
     }
 
     public partial class Switches

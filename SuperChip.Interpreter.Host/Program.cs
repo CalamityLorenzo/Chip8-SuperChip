@@ -3,6 +3,8 @@ namespace SuperChip.Interpreter.Host
 
     using System.Text.Json;
     using System.IO;
+    using SuperChip.Interpreter.UI;
+
     internal static class Program
     {
         /// <summary>
@@ -24,6 +26,7 @@ namespace SuperChip.Interpreter.Host
             settings= System.Text.Json.JsonSerializer.Deserialize<SuperChipSettings>(fs);
 #endif
             using (var gmw = new SuperChipGame(settings))
+            // using (var gmw = new UITest(settings))
             {
                 gmw.Run();
             }

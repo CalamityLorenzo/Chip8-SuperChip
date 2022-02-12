@@ -7,7 +7,7 @@ using Rectangle = Microsoft.Xna.Framework.Rectangle;
 namespace SuperChip.Interpreter.Host
 {
 
-    internal class Chip8Display
+    internal class Chip8Display : IDrawable
     {
         private readonly int width;
         private readonly int height;
@@ -16,9 +16,17 @@ namespace SuperChip.Interpreter.Host
         private readonly int cellHeight;
         private readonly SpriteBatch spriteBatch;
         private readonly Texture2D cell;
+
+        public event EventHandler<EventArgs> DrawOrderChanged;
+        public event EventHandler<EventArgs> VisibleChanged;
+
         public bool[] DisplayArray { get; private set; }
         public int BorderWidth { get; }
         public int Padding { get; }
+
+        public int DrawOrder => throw new NotImplementedException();
+
+        public bool Visible {get;set;}
 
         public Chip8Display(int width, int height, Point position, int cellWidth, int cellHeight, Color cellColor, SpriteBatch spriteBatch)
         {
@@ -61,6 +69,10 @@ namespace SuperChip.Interpreter.Host
                     }
         }
 
+
+        public void Reset(){
+            this.DisplayArray = new bool[width * height];
+        }
     }
 
 }

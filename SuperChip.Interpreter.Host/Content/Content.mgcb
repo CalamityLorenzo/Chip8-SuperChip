@@ -20,6 +20,20 @@
 /processorParam:TextureFormat=Compressed
 /build:consolas.spritefont
 
+#begin ConsolasSmall.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:ConsolasSmall.spritefont
+
+#begin File.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:File.spritefont;Arial.spritefont
+
 #begin gameover.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor

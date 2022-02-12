@@ -70,6 +70,10 @@ namespace SuperChip11Interpreter.V3
             Array.Copy(new byte[] { 0x3C, 0x7E, 0xC3, 0xC3, 0x7E, 0x7E, 0xC3, 0xC3, 0x7E, 0x3C }, 0, Memory, 160, 10); //8
             Array.Copy(new byte[] { 0x7C, 0x3E, 0x03, 0x03, 0x3F, 0x7F, 0xC3, 0xC3, 0x7E, 0x3C }, 0, Memory, 170, 10); //9
 
+            // Set the last instruction before 'program memory' to clrar the screen
+            this.Memory[0x1FE] = 0x00;
+            this.Memory[0x1FF] = 0xE0;
+
             this.keyMappings = new Dictionary<char, byte>
                     {
                         {'1', 1 },
@@ -122,7 +126,7 @@ namespace SuperChip11Interpreter.V3
                         var idx = currentXPos + (currentYPos * 128);
                         var screenPixel = this.Display[idx];
                         // Test to see if this particular bit is set.
-                        var rowPixel = (rowData & (1 << (spriteWidth-1) - spritePixel)) != 0;
+                        var rowPixel = (rowData & (1 << (spriteWidth - 1) - spritePixel)) != 0;
                         // are we updating an already set bit.
                         if (rowPixel & screenPixel)
                         {
@@ -138,7 +142,8 @@ namespace SuperChip11Interpreter.V3
                         {
                             this.Display[idx + 1] = currentBit;
                         }
-                        else{
+                        else
+                        {
                             Debug.WriteLine($"X: out of range {currentXPos}");
                         }
                         if (!this.HighResolutionMode && currentYPos + 1 < screenWidth)
@@ -148,7 +153,8 @@ namespace SuperChip11Interpreter.V3
                                 this.Display[idx + 129] = currentBit;
 
                         }
-                        else{
+                        else
+                        {
                             Debug.WriteLine($"Y: out of range {currentYPos}");
                         }
                     }

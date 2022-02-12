@@ -34,6 +34,8 @@ public partial class SuperChipInterpreter
     public bool SuperChipEnabled { get; }
     public bool HighResolutionMode { get; private set; }
 
+
+    public bool Pause {get;set;}
     public SuperChipInterpreter(int ticksPerSecond, int instructionsPerTick, bool enableLoadQuirks, bool enableShiftquirks, bool enableJumpQuirk)
     {
         var startTime = DateTime.Now;
@@ -78,12 +80,12 @@ public partial class SuperChipInterpreter
         this.instructionTimer.Update(DateTime.Now);
         this.sixtyHertzTimer.Update(DateTime.Now);
         var ticked = this.instructionTimer.GetTicked();
-        if (ticked==true)
+        if (ticked==true && !Pause)
         {
-            if (this.instructionsPerTick > 0)
+            if                     (this.instructionsPerTick > 0)
             {
                 for (var x = 0; x < this.instructionsPerTick; ++x)
-                    this.FetchDecodeExecute();
+this.FetchDecodeExecute();
             }
             else
                 this.FetchDecodeExecute();
@@ -91,7 +93,7 @@ public partial class SuperChipInterpreter
 
         if (soundTickAccumulator == 0) soundtickduration = new TimeSpan(DateTime.Now.Ticks);
 
-        if (this.sixtyHertzTimer.GetTicked())
+        if (!Pause && this.sixtyHertzTimer.GetTicked())
         {
             soundTickAccumulator += 1;
 
@@ -121,7 +123,7 @@ public partial class SuperChipInterpreter
     public void Load(byte[] instructions)
     {
         Array.Copy(instructions, 0, Memory, 0x200, instructions.Length);
-        this.ProgramCounter = 0x200; // Currently executing instruction.
+        this.ProgramCounter = 0x1FE; // Currently executing instruction.
     }
 
     /// <summary>

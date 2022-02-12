@@ -5,6 +5,7 @@
         "JumpQuirk":false
     },
     "Sound" : "./Content/beep.wav",
-    "Rom":"D:/Code/Chip8-SuperChip/Chip8.Files/progs/test_opcode.ch8",
+    "Rom":"",
+    "FilePickerDirectory":"D:/Code/Chip8-SuperChip/Chip8.Files",
     "SuperChipEnabled":true
 }
